@@ -41,16 +41,19 @@ struct CardsStackView: View {
     var cardIndex: Int
     
     /// Holds the current card rotation angle.
-    @State private var cardRotationAngle: CGFloat = 0
+    @State private var cardRotationAngle = 0.0
     
     /// Is set when dragging backwards. This is used to know if the top or bottom card segment is animated.
-    @State private var isDraggingBackwards: Bool = false
+    @State private var isDraggingBackwards = false
     
     /// Is set when the drag gesture is used.
-    @State private var isDragging: Bool = false
+    @State private var isDragging = false
     
     /// Starts an animation using keyframe animator. It also changes if the cardRotationAngle is used or the KeyframeAnimatior angle.
-    @State private var isAnimating: Bool = false
+    @State private var isAnimating = false
+    
+    /// Should animate reset of a position of a scroll. Used at first / last page or when not scrolled enough.
+    @State private var shouldAnimateResetPosition = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -180,13 +183,15 @@ struct CardsStackView: View {
                     }
                     .zIndex(isDragging && isDraggingBackwards ? 2 : 1)
                 } keyframes: { _ in
-                    KeyframeTrack(\.rotation) {
+                    KeyframeTrack(\.rotation) {                        
                         if isDraggingBackwards {
                             LinearKeyframe(cardRotationAngle, duration: .zero)
-                            LinearKeyframe(.angles180, duration: CardsStackView.flipAnimationDuration)
+                            LinearKeyframe(!shouldAnimateResetPosition ? .angles180 : 0.0, 
+                                           duration: CardsStackView.flipAnimationDuration)
                         } else {
                             LinearKeyframe(cardRotationAngle, duration: .zero)
-                            LinearKeyframe(-.angles180, duration: CardsStackView.flipAnimationDuration)
+                            LinearKeyframe(!shouldAnimateResetPosition ? -.angles180 : 0.0,
+                                           duration: CardsStackView.flipAnimationDuration)
                         }
                     }
                 }
@@ -209,7 +214,16 @@ struct CardsStackView: View {
                         
                         // Stop the drag since there's nothing previous / next.
                         if !((didMinimalDragForward && hasNextCard) || (didMinimalDragBackward && hasPrevCard)) {
-                            cardRotationAngle = 0
+                            shouldAnimateResetPosition = true
+                            isAnimating = true
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + CardsStackView.flipAnimationDuration) {
+                                cardRotationAngle = 0.0
+                                isAnimating = false
+                                isDragging = false
+                                shouldAnimateResetPosition = false
+                            }
+                            
                             return
                         }
                         
