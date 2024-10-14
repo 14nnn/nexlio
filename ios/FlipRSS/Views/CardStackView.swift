@@ -15,7 +15,7 @@ extension Notification.Name {
  Holds a stack of card views enabling the user to flip through it.
  */
 struct CardsStackView: View {
-    static let horizontalPadding = 20.0
+    static let horizontalPadding = 0.0
     
     /// This is the minimal drag required to flip to the previous / next page.
     static let minimalDrag = 50.0
@@ -36,6 +36,13 @@ struct CardsStackView: View {
         case forward
         case backward
     }
+    
+    struct NotificationObject {
+        let id: UUID
+        let direction: FlipDirection
+    }
+    
+    let id: UUID
     
     /// Index of the current card.
     var cardIndex: Int
@@ -128,11 +135,10 @@ struct CardsStackView: View {
                                 anchor: .bottom,
                                 perspective: CardsStackView.cardRotationPerspective
                             )
-                            .zIndex(1)
                         }
                         Spacer(minLength: 0)
                     }
-                    .zIndex(isDragging && !isDraggingBackwards ? 2 : 1)
+                    .zIndex(isDragging && !isDraggingBackwards ? 1 : 0)
                     
                     // Lower Half
                     VStack(spacing: 0.0) {
@@ -168,7 +174,6 @@ struct CardsStackView: View {
                                 .frame(width: cardsWidth,
                                        height: geometry.size.height)
                                 .offset(y: -halfCardHeight / 2.0)
-                                .zIndex(1)
                             }
                             .frame(width: cardsWidth,
                                    height: halfCardHeight)
@@ -181,9 +186,9 @@ struct CardsStackView: View {
                             )
                         }
                     }
-                    .zIndex(isDragging && isDraggingBackwards ? 2 : 1)
+                    .zIndex(isDragging && isDraggingBackwards ? 1 : 0)
                 } keyframes: { _ in
-                    KeyframeTrack(\.rotation) {                        
+                    KeyframeTrack(\.rotation) {
                         if isDraggingBackwards {
                             LinearKeyframe(cardRotationAngle, duration: .zero)
                             LinearKeyframe(!shouldAnimateResetPosition ? .angles180 : 0.0, 
@@ -232,10 +237,10 @@ struct CardsStackView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + CardsStackView.flipAnimationDuration) {
                             if didMinimalDragForward {
                                 NotificationCenter.default.post(name: .didFlipCardStackView,
-                                                                object: FlipDirection.forward)
+                                                                object: NotificationObject(id: self.id, direction: FlipDirection.forward))
                             } else if didMinimalDragBackward {
                                 NotificationCenter.default.post(name: .didFlipCardStackView,
-                                                                object: FlipDirection.backward)
+                                                                object: NotificationObject(id: self.id, direction: FlipDirection.backward))
                             }
                             
                             cardRotationAngle = 0
