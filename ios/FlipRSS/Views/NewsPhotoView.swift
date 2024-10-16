@@ -10,8 +10,11 @@ import Kingfisher
 
 /// A news view with a photo, title and a subtitle.
 struct NewsPhotoView: View {
+    /// Large font size for the title.
+    static let largeTitleFontSize = 24.0
+    
     /// Font size for the title.
-    static let titleFontSize = 24.0
+    static let titleFontSize = 16.0
     
     /// Font size for the subtitle.
     static let subtitleFontSize = 16.0
@@ -24,7 +27,7 @@ struct NewsPhotoView: View {
     var body: some View {
         ZStack() {
             GeometryReader { geometry in
-                KFImage(URL(string: news.imageName))
+                KFImage(news.imageURL)
                     .placeholder {
                         ProgressView()
                     }
@@ -43,19 +46,18 @@ struct NewsPhotoView: View {
                     endPoint: .top
                 )
                 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(news.title)
-                        .font(.system(size: NewsPhotoView.titleFontSize, weight: .bold, design: .default))
-                        .lineLimit(2)
+                        .font(.system(size: isLarge ? NewsPhotoView.largeTitleFontSize : NewsPhotoView.titleFontSize, weight: .bold, design: .default))
+                        .lineLimit(isLarge ? 3 : 4)
                         .foregroundColor(.white)
                     
                     Text(news.details)
                         .font(.system(size: NewsPhotoView.subtitleFontSize, weight: .regular, design: .default))
                         .foregroundColor(.white)
                         .lineLimit(2)
-                        .lineLimit(isLarge ? nil : 2)
                 }
-                .padding()
+                .padding(12.0)
             }
             .frame(maxWidth: .infinity, 
                    alignment: .leading)
