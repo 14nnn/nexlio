@@ -51,7 +51,7 @@ class RSSParser {
             
             // Strip HTML from the description or content before assigning to News.details
             let cleanDetails = item.description?.strippingHTML() ?? ""
-
+            
             return News(
                 title: item.title ?? "",
                 details: cleanDetails,

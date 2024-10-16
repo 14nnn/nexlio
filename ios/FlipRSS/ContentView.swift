@@ -73,6 +73,7 @@ struct ContentView: View {
                             CardsStackHolderView(feedURL: feed.url)
                                 .frame(width: cardsWidth, height: .infinity)
                                 .zIndex(currentIndex == i ? 10 : 0)
+                                .disabled(currentIndex != i)
                         }
                     }
                     .scrollTargetLayout()
