@@ -11,12 +11,15 @@ struct News: Identifiable {
     let id = UUID()
     var title: String
     var details: String
+    let date: Date?
+    
     var imageURL: URL?
     var link: URL?
     
-    init(title: String, details: String, imageURL: URL?, link: URL?) {
+    init(title: String, details: String, date: Date?, imageURL: URL?, link: URL?) {
         self.title = title
         self.details = details
+        self.date = date
         self.imageURL = imageURL
         self.link = link
     }

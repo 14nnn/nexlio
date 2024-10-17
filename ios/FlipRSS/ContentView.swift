@@ -20,15 +20,6 @@ struct CardsStackHolderView: View {
                     }
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .didFlipCardStackView)) { notification in
-                if let object = notification.object as? CardsStackView.NotificationObject, object.id == id {
-                    if object.direction == .forward && currentIndex < viewModel.cards.count - 1 {
-                        currentIndex += 1
-                    } else if object.direction == .backward && currentIndex > 0 {
-                        currentIndex -= 1
-                    }
-                }
-            }
             .onAppear {
                 viewModel.fetchRSSFeed(from: feedURL)
             }

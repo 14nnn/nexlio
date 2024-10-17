@@ -55,6 +55,7 @@ class RSSParser {
             return News(
                 title: item.title ?? "",
                 details: cleanDetails,
+                date: item.pubDate,
                 imageURL: imageUrl,
                 link: item.link.flatMap { URL(string: $0) }
             )
@@ -70,6 +71,7 @@ class RSSParser {
             return News(
                 title: entry.title ?? "",
                 details: entry.summary?.value ?? "",
+                date: entry.published ?? entry.updated,
                 imageURL: imageUrl,
                 link: entry.links?.first { $0.attributes?.rel == "alternate" }?.attributes?.href.flatMap { URL(string: $0) }
             )
@@ -81,6 +83,7 @@ class RSSParser {
             News(
                 title: item.title ?? "",
                 details: item.contentText ?? item.summary ?? "",
+                date: item.datePublished,
                 imageURL: item.image.flatMap { URL(string: $0) },
                 link: item.url.flatMap { URL(string: $0) }
             )
