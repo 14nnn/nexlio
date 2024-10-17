@@ -130,9 +130,6 @@ struct FeedRow: View {
     var body: some View {
         HStack {
             Text(feed.name ?? "Unnamed Feed")
-            Spacer()
-            Text(feed.url?.absoluteString ?? "")
-                .foregroundStyle(.secondary)
         }
         .contentShape(Rectangle())
         .onTapGesture {

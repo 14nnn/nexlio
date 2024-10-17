@@ -49,7 +49,7 @@ struct RelativeTimeLabel: View {
                 return secondsDifference < 0 ? "an hour ago" : "in an hour"
             }
             let remainingMinutes = minutes % 60
-            return secondsDifference < 0 ? "\(hours) hours and \(remainingMinutes) minutes ago" : "in \(hours) hours and \(remainingMinutes) minutes"
+            return secondsDifference < 0 ? "\(hours) hours ago" : "in \(hours) hours"
         }
         
         let days = hours / 24

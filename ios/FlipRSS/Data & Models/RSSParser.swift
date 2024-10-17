@@ -73,7 +73,7 @@ class RSSParser {
                 details: entry.summary?.value ?? "",
                 date: entry.published ?? entry.updated,
                 imageURL: imageUrl,
-                link: entry.links?.first { $0.attributes?.rel == "alternate" }?.attributes?.href.flatMap { URL(string: $0) }
+                link: entry.links?.first?.attributes?.href.flatMap { URL(string: $0) }
             )
         } ?? []
     }

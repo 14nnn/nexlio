@@ -13,7 +13,7 @@ import SafariServices
  */
 struct CardView: View {
     /// Corner radius of the CardView.
-    static let cornerRadius = 8.0
+    static let cornerRadius = 6.0
     
     let card: Card
     

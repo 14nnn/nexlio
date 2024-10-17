@@ -56,7 +56,7 @@ struct ContentView: View {
             let cardsHeight = cardsWidth * aspectRatioCards
             
             VStack(spacing: 16.0) {
-                HStack(spacing: 8.0) {
+                HStack(alignment: .center, spacing: 8.0) {
                     let currentFeed = feeds.isEmpty ? nil : feeds[currentIndex ?? 0]
                     //if let icon = currentFeed.iconImage {
                     //    Image(uiImage: icon)
@@ -67,7 +67,7 @@ struct ContentView: View {
                     
                     Text(currentFeed?.name ?? "Unnamed Feed")
                         .frame(width: .infinity)
-                        .font(.system(size: 24.0, weight: .bold, design: .default))
+                        .font(.system(size: 28.0, weight: .black, design: .default))
                         .foregroundColor(.white)
                     
                     Spacer()
@@ -75,9 +75,14 @@ struct ContentView: View {
                     Button(action: {
                         showSettings = true
                     }) {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 24.0))
-                            .foregroundColor(Color("TopBarColors"))
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 22.0))
+                            .foregroundColor(Color.white)
+                            .frame(width: 28.0, height: 28.0)
+                            .background(
+                                Circle()
+                                .fill(Color.gray.opacity(0.2))
+                            )
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

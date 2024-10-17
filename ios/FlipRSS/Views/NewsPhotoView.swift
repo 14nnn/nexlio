@@ -43,7 +43,7 @@ struct NewsPhotoView: View {
                     
                     // Gradient so white text is always visible, even on white photos.
                     LinearGradient(
-                        gradient: Gradient(colors: [Color.black.opacity(0.8), Color.clear]),
+                        gradient: Gradient(colors: [Color.black.opacity(0.9), Color.clear]),
                         startPoint: .bottom,
                         endPoint: .top
                     ).frame(height: 200)
