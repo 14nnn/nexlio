@@ -7,9 +7,6 @@
 
 import SwiftUI
 
-extension Notification.Name {
-    static let didFlipCardStackView = Notification.Name("didFlipCardStackView")
-}
 
 /**
  Holds a stack of card views enabling the user to flip through it.

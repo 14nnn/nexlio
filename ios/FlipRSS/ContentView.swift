@@ -20,6 +20,15 @@ struct CardsStackHolderView: View {
                     }
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .didFlipCardStackView)) { notification in
+                if let object = notification.object as? CardsStackView.NotificationObject, object.id == id {
+                    if object.direction == .forward && currentIndex < viewModel.cards.count - 1 {
+                        currentIndex += 1
+                    } else if object.direction == .backward && currentIndex > 0 {
+                        currentIndex -= 1
+                    }
+                }
+            }
             .onAppear {
                 viewModel.fetchRSSFeed(from: feedURL)
             }
@@ -40,6 +49,7 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var dragOffset: CGSize = .zero
     @State private var isVerticalDrag: Bool = false
+    @State private var refreshID = UUID()
     
     var body: some View {
         GeometryReader { geometry in
@@ -50,7 +60,7 @@ struct ContentView: View {
             
             VStack(spacing: 16.0) {
                 HStack(spacing: 8.0) {
-                    let currentFeed = feeds[currentIndex ?? 0]
+                    let currentFeed = feeds.isEmpty ? nil : feeds[currentIndex ?? 0]
                     //if let icon = currentFeed.iconImage {
                     //    Image(uiImage: icon)
                     //        .resizable()
@@ -58,7 +68,7 @@ struct ContentView: View {
                     //        .frame(width: 24.0, height: 24.0)
                     //}
                     
-                    Text(currentFeed.name ?? "Unnamed Feed")
+                    Text(currentFeed?.name ?? "Unnamed Feed")
                         .frame(width: .infinity)
                         .font(.system(size: 24.0, weight: .bold, design: .default))
                         .foregroundColor(.white)
@@ -88,11 +98,16 @@ struct ContentView: View {
                     }
                     .scrollTargetLayout()
                 }
+                .id(refreshID)
                 .scrollIndicators(.never)
                 .scrollClipDisabled()
                 .scrollPosition(id: $currentIndex)
                 .scrollTargetBehavior(.paging)
                 .safeAreaPadding(.zero)
+                .onReceive(NotificationCenter.default.publisher(for: .refreshFeeds)) { _ in
+                    refreshID = UUID()
+                    currentIndex = 0
+                }
                 .gesture(
                     DragGesture()
                         .onChanged { value in

@@ -98,6 +98,7 @@ struct FeedSettingsView: View {
     private func saveContext() {
         do {
             try viewContext.save()
+            NotificationCenter.default.post(name: .refreshFeeds, object: nil)
         } catch {
             let error = error as NSError
             fatalError("Unresolved error \(error), \(error.userInfo)")
