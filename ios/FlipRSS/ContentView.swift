@@ -20,6 +20,12 @@ struct CardsStackHolderView: View {
                     }
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .didPullToRefresh)) { notification in
+                if let notificationId = notification.object as? UUID, id == notificationId {
+                    viewModel.cards = []
+                    viewModel.fetchRSSFeed(from: feedURL)
+                }
+            }
             .onAppear {
                 viewModel.fetchRSSFeed(from: feedURL)
             }

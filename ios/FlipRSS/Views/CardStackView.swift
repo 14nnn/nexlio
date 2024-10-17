@@ -62,6 +62,8 @@ struct CardsStackView: View {
     /// Should animate reset of a position of a scroll. Used at first / last page or when not scrolled enough.
     @State private var shouldAnimateResetPosition = false
     
+    @State private var isRefreshing = false
+    
     var body: some View {
         Group {
             if self.cards.isEmpty {
@@ -216,6 +218,14 @@ struct CardsStackView: View {
                                 cardRotationAngle = Double(-dragOffset / geometry.size.height * .angles180)
                                 isDraggingBackwards = dragOffset < 0
                                 isDragging = true
+                                
+                                if cardIndex == 0 && dragOffset > 0 {
+                                    if dragOffset > CardsStackView.minimalDrag && !isRefreshing {
+                                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                                        impact.impactOccurred()
+                                        isRefreshing = true
+                                    }
+                                }
                             }
                             .onEnded { value in
                                 let dragOffset = value.translation.height
@@ -224,6 +234,8 @@ struct CardsStackView: View {
                                 let didMinimalDragBackward = dragOffset > CardsStackView.minimalDrag
                                 let hasNextCard = cardIndex < self.cards.count - 1
                                 let hasPrevCard = cardIndex > 0
+                                
+                                isRefreshing = false
                                 
                                 // Stop the drag since there's nothing previous / next.
                                 if !((didMinimalDragForward && hasNextCard) || (didMinimalDragBackward && hasPrevCard)) {
@@ -235,6 +247,10 @@ struct CardsStackView: View {
                                         isAnimating = false
                                         isDragging = false
                                         shouldAnimateResetPosition = false
+                                    }
+                                    
+                                    if cardIndex == 0 && dragOffset > CardsStackView.minimalDrag {
+                                        NotificationCenter.default.post(name: .didPullToRefresh, object: id)
                                     }
                                     
                                     return

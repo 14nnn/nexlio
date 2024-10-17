@@ -31,7 +31,7 @@ struct NewsPhotoView: View {
         GeometryReader { geometry in
             ZStack(alignment: .bottomLeading) {
                 if let imageURL = news.imageURL {
-                    KFImage(news.imageURL)
+                    KFImage(imageURL)
                         .placeholder {
                             ProgressView()
                         }
