@@ -38,6 +38,8 @@ struct ContentView: View {
     @State private var currentIndex: Int? = 0
     @State private var isDragging: Bool = false
     @State private var showSettings = false
+    @State private var dragOffset: CGSize = .zero
+    @State private var isVerticalDrag: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -91,7 +93,20 @@ struct ContentView: View {
                 .scrollPosition(id: $currentIndex)
                 .scrollTargetBehavior(.paging)
                 .safeAreaPadding(.zero)
-                
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            dragOffset = value.translation
+                            isVerticalDrag = abs(dragOffset.height) > abs(dragOffset.width)
+                        }
+                        .onEnded { _ in
+                            dragOffset = .zero
+                            isVerticalDrag = false
+                        }
+                )
+                .simultaneousGesture(
+                    DragGesture().onChanged { _ in }.onEnded { _ in }
+                )
                 
                 HStack(spacing: 8) {
                     ForEach(feeds.indices, id: \.self) { index in
