@@ -63,10 +63,14 @@ class RSSParser {
     
     private func parseAtomFeed(_ feed: AtomFeed) -> [News] {
         return feed.entries?.compactMap { entry in
-            News(
+            // Attempt to get image URL from enclosure, media thumbnails or media contents.
+            let imageUrl = entry.media?.mediaContents?.first?.attributes?.url.flatMap { URL(string: $0) }
+            ?? entry.media?.mediaThumbnails?.first?.attributes?.url.flatMap { URL(string: $0) }
+            
+            return News(
                 title: entry.title ?? "",
                 details: entry.summary?.value ?? "",
-                imageURL: entry.links?.first { $0.attributes?.rel == "enclosure" }?.attributes?.href.flatMap { URL(string: $0) },
+                imageURL: imageUrl,
                 link: entry.links?.first { $0.attributes?.rel == "alternate" }?.attributes?.href.flatMap { URL(string: $0) }
             )
         } ?? []

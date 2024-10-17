@@ -25,10 +25,3 @@ struct News: Identifiable {
 enum Card {
     case oneAtwoBCard(news: [News])
 }
-
-struct Feed: Identifiable {
-    let id = UUID()
-    let url: URL
-    let title: String
-    let iconUrl: URL?
-}

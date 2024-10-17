@@ -1,5 +1,6 @@
 import SwiftUI
 import Kingfisher
+import CoreData
 
 struct CardsStackHolderView: View {
     @StateObject private var viewModel = RSSFeedViewModel()
@@ -28,8 +29,15 @@ struct CardsStackHolderView: View {
 
 
 struct ContentView: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Feed.sortOrder, ascending: true)],
+        animation: .default)
+    private var feeds: FetchedResults<Feed>
+    
     @State private var currentIndex: Int? = 0
     @State private var isDragging: Bool = false
+    @State private var showSettings = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -40,16 +48,15 @@ struct ContentView: View {
             
             VStack(spacing: 16.0) {
                 HStack(spacing: 8.0) {
-                    let currentFeed = Data.mockFeeds[currentIndex ?? 0]
-                    let icon = currentFeed.iconUrl
-                    if (icon != nil) {
-                        KFImage(currentFeed.iconUrl)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 24.0, height: 24.0)
-                    }
+                    let currentFeed = feeds[currentIndex ?? 0]
+                    //if let icon = currentFeed.iconImage {
+                    //    Image(uiImage: icon)
+                    //        .resizable()
+                    //        .scaledToFill()
+                    //        .frame(width: 24.0, height: 24.0)
+                    //}
                     
-                    Text(currentFeed.title)
+                    Text(currentFeed.name ?? "Unnamed Feed")
                         .frame(width: .infinity)
                         .font(.system(size: 24.0, weight: .bold, design: .default))
                         .foregroundColor(.white)
@@ -57,6 +64,7 @@ struct ContentView: View {
                     Spacer()
                     
                     Button(action: {
+                        showSettings = true
                     }) {
                         Image(systemName: "gearshape")
                             .font(.system(size: 24.0))
@@ -68,9 +76,9 @@ struct ContentView: View {
                 
                 ScrollView(.horizontal) {
                     LazyHStack(spacing: 0.0) {
-                        ForEach(0..<Data.mockFeeds.count, id: \.self) { i in
-                            let feed = Data.mockFeeds[i]
-                            CardsStackHolderView(feedURL: feed.url)
+                        ForEach(feeds.indices, id: \.self) { i in
+                            let feed = feeds[i]
+                            CardsStackHolderView(feedURL: feed.url!)
                                 .frame(width: cardsWidth, height: .infinity)
                                 .zIndex(currentIndex == i ? 10 : 0)
                                 .disabled(currentIndex != i)
@@ -86,7 +94,7 @@ struct ContentView: View {
                 
                 
                 HStack(spacing: 8) {
-                    ForEach(0..<Data.mockFeeds.count, id: \.self) { index in
+                    ForEach(feeds.indices, id: \.self) { index in
                         Circle()
                             .frame(width: 8, height: 8)
                             .scaleEffect(currentIndex == index ? 1.0 : 0.9)
@@ -95,10 +103,15 @@ struct ContentView: View {
                 }
                 .zIndex(-1)
             }
-        }.background(Color.black)
+        }
+        .background(Color.black)
+        .sheet(isPresented: $showSettings) {
+            FeedSettingsView()
+        }
     }
 }
 
 #Preview {
-    ContentView().background(Color.black)
+    ContentView()
+        .background(Color.black)
 }
