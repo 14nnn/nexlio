@@ -28,7 +28,7 @@ struct RelativeTimeLabel: View {
         let absSeconds = abs(secondsDifference)
         
         if absSeconds < 15 {
-            return secondsDifference < 0 ? "just now" : "in a few seconds"
+            return secondsDifference <= 0 ? "just now" : "in a few seconds"
         }
         
         if absSeconds < 60 {

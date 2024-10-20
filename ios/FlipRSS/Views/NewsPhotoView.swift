@@ -48,8 +48,7 @@ struct NewsPhotoView: View {
                         .frame(width: geometry.size.width, height: geometry.size.height)
                     
                     // Blur gradient so white text is always visible, even on white photos.
-                    Rectangle()
-                        .background(.regularMaterial)
+                    BlurView(style: .systemMaterialDark)
                         .frame(maxWidth: geometry.size.width, maxHeight: geometry.size.height)
                         .frame(height: isLarge ? geometry.size.height * 0.4 : (geometry.size.height / 3) * 2)
                         .mask(
@@ -68,7 +67,7 @@ struct NewsPhotoView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(news.title)
                             .font(.system(size: isLarge ? NewsPhotoView.largeTitleFontSize : NewsPhotoView.titleFontSize, weight: .bold, design: .serif))
-                            .lineLimit(isLarge ? 3 : 4)
+                            .lineLimit(3)
                             .foregroundColor(.white)
                             .frame(maxWidth: geometry.size.width, alignment: .leading)
                         
@@ -104,7 +103,7 @@ struct NewsPhotoView: View {
                         Text(news.title)
                             .font(.system(size: NewsPhotoView.largeTitleFontSize, weight: .bold, design: .serif))
                             .foregroundColor(.black)
-                            .lineLimit(4)
+                            .lineLimit(3)
                             .multilineTextAlignment(.center)
                             .padding(.bottom, 8)
                         

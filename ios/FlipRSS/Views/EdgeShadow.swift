@@ -116,7 +116,7 @@ struct EdgeShadowShape: Shape {
 }
 
 extension View {
-    func edgeShadow(color: Color = .white.opacity(0.5),
+    func edgeShadow(color: Color = .white.opacity(0.3),
                     radius: CGFloat = 1.0,
                     edges: [Edge] = [.top, .leading, .trailing]) -> some View {
         self.modifier(EdgeShadow(color: color, radius: radius, edges: edges))

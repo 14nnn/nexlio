@@ -66,8 +66,10 @@ struct ContentView: View {
                                let iconImageURL = URL(string: iconImage) {
                                 KFImage(iconImageURL)
                                     .placeholder {
-                                        ProgressView()
                                     }
+                                    .onFailure({ error in
+                                        
+                                    })
                                     .loadDiskFileSynchronously()
                                     .cacheMemoryOnly()
                                     .resizable()

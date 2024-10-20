@@ -87,9 +87,7 @@ class FeedDataManager: ObservableObject {
                 feed.lastRefreshDate = Date()
                 self.saveContext()
                 
-                DispatchQueue.main.async {
-                    self.newsByFeed[feed] = news
-                }
+                self.fetchNewsFromCoreData(for: feed)
             case .failure(let error):
                 print("Failed to refresh feed: \(error)")
             }
