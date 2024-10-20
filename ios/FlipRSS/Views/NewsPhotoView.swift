@@ -11,16 +11,22 @@ import Kingfisher
 /// A news view with a photo, title and a subtitle.
 struct NewsPhotoView: View {
     /// Large font size for the title.
-    static let largeTitleFontSize = 22.0
+    static let largeTitleFontSize = 24.0
     
     /// Font size for the title.
     static let titleFontSize = 16.0
+    
+    /// Large font size for the subtitle.
+    static let largeSubtitleFontSize = 16.0
     
     /// Font size for the subtitle.
     static let subtitleFontSize = 14.0
     
     /// Font size for the time.
     static let timeFontSize = 12.0
+    
+    /// Large font size for the time.
+    static let largeTimeFontSize = 14.0
     
     let news: News
     
@@ -41,12 +47,23 @@ struct NewsPhotoView: View {
                         .scaledToFill()
                         .frame(width: geometry.size.width, height: geometry.size.height)
                     
-                    // Gradient so white text is always visible, even on white photos.
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.black.opacity(0.9), Color.clear]),
-                        startPoint: .bottom,
-                        endPoint: .top
-                    ).frame(height: 200)
+                    // Blur gradient so white text is always visible, even on white photos.
+                    Rectangle()
+                        .background(.regularMaterial)
+                        .frame(maxWidth: geometry.size.width, maxHeight: geometry.size.height)
+                        .frame(height: isLarge ? geometry.size.height * 0.4 : (geometry.size.height / 3) * 2)
+                        .mask(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color.black.opacity(1.0),
+                                    Color.black.opacity(1.0),
+                                    Color.black.opacity(0.9),
+                                    Color.black.opacity(0.0)
+                                ]),
+                                startPoint: .bottom,
+                                endPoint: .top
+                            )
+                        )
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(news.title)
@@ -57,7 +74,7 @@ struct NewsPhotoView: View {
                         
                         if (!news.details.isEmpty) {
                             Text(news.details)
-                                .font(.system(size: NewsPhotoView.subtitleFontSize, weight: .regular, design: .default))
+                                .font(.system(size: isLarge ? NewsPhotoView.largeSubtitleFontSize : NewsPhotoView.subtitleFontSize, weight: .regular, design: .default))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: geometry.size.width, alignment: .leading)
                                 .lineLimit(2)
@@ -66,7 +83,7 @@ struct NewsPhotoView: View {
                         if (news.date != nil) {
                             RelativeTimeLabel(targetDate: news.date!, style: { label in
                                 label
-                                    .font(.system(size: NewsPhotoView.timeFontSize, weight: .regular, design: .default))
+                                    .font(.system(size: isLarge ? NewsPhotoView.largeTimeFontSize : NewsPhotoView.timeFontSize, weight: .regular, design: .default))
                                     .foregroundColor(.white.opacity(0.8))
                             })
                         }
@@ -87,6 +104,7 @@ struct NewsPhotoView: View {
                         Text(news.title)
                             .font(.system(size: NewsPhotoView.largeTitleFontSize, weight: .bold, design: .serif))
                             .foregroundColor(.black)
+                            .lineLimit(4)
                             .multilineTextAlignment(.center)
                             .padding(.bottom, 8)
                         
@@ -94,6 +112,7 @@ struct NewsPhotoView: View {
                             Text(news.details)
                                 .font(.system(size: NewsPhotoView.subtitleFontSize, weight: .regular, design: .default))
                                 .foregroundColor(.black)
+                                .lineLimit(2)
                                 .multilineTextAlignment(.center)
                         }
                         
@@ -103,6 +122,7 @@ struct NewsPhotoView: View {
                                     .font(.system(size: NewsPhotoView.timeFontSize, weight: .regular, design: .default))
                                     .foregroundColor(.black.opacity(0.8))
                             })
+                            .padding(.top, 8)
                         }
                         
                         Spacer()

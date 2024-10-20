@@ -140,7 +140,6 @@ struct FeedRow: View {
                let iconImageURL = URL(string: iconImage) {
                 KFImage(iconImageURL)
                     .placeholder {
-                        ProgressView()
                     }
                     .loadDiskFileSynchronously()
                     .cacheMemoryOnly()
