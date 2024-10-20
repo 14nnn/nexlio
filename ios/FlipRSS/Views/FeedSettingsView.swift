@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct FeedSettingsView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -25,6 +26,7 @@ struct FeedSettingsView: View {
     
     @State private var newFeedURL = ""
     @State private var newFeedName = ""
+    @State private var newFeedImageURL: URL? = nil
     
     var body: some View {
         NavigationView {
@@ -50,6 +52,7 @@ struct FeedSettingsView: View {
                     Button {
                         newFeedName = ""
                         newFeedURL = ""
+                        newFeedImageURL = nil
                         isAddingFeed = true
                     } label: {
                         Label("Add Feed", systemImage: "plus")
@@ -60,6 +63,7 @@ struct FeedSettingsView: View {
                 AddFeedView(isPresented: $isAddingFeed,
                             feedName: $newFeedName,
                             feedURL: $newFeedURL,
+                            feedIconURL: $newFeedImageURL,
                             feedCount: feedCount,
                             onSave: saveNewFeed,
                             isAdding: true)
@@ -69,6 +73,7 @@ struct FeedSettingsView: View {
                 AddFeedView(isPresented: $isEditingFeed,
                             feedName: $newFeedName,
                             feedURL: $newFeedURL,
+                            feedIconURL: $newFeedImageURL,
                             feedCount: feedCount,
                             onSave: saveEditedFeed,
                             isAdding: false)
@@ -110,6 +115,7 @@ struct FeedSettingsView: View {
         newFeed.id = UUID()
         newFeed.name = newFeedName
         newFeed.url = URL(string: newFeedURL)
+        newFeed.iconImage = newFeedImageURL?.absoluteString
         newFeed.sortOrder = Int16(feedCount)
         saveContext()
     }
@@ -118,6 +124,7 @@ struct FeedSettingsView: View {
         if let feed = selectedFeed {
             feed.name = newFeedName
             feed.url = URL(string: newFeedURL)
+            feed.iconImage = newFeedImageURL?.absoluteString
             saveContext()
         }
     }
@@ -129,6 +136,19 @@ struct FeedRow: View {
     
     var body: some View {
         HStack {
+            if let iconImage = feed.iconImage,
+               let iconImageURL = URL(string: iconImage) {
+                KFImage(iconImageURL)
+                    .placeholder {
+                        ProgressView()
+                    }
+                    .loadDiskFileSynchronously()
+                    .cacheMemoryOnly()
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 24.0, height: 24.0)
+            }
+            
             Text(feed.name ?? "Unnamed Feed")
         }
         .contentShape(Rectangle())
@@ -142,9 +162,13 @@ struct AddFeedView: View {
     @Binding var isPresented: Bool
     @Binding var feedName: String
     @Binding var feedURL: String
+    @Binding var feedIconURL: URL?
+    
     @Environment(\.managedObjectContext) private var viewContext
     var feedCount: Int
     var onSave: () -> Void
+    
+    @State private var isLoading = false
     @State private var showError = false
     
     let isAdding: Bool
@@ -154,27 +178,64 @@ struct AddFeedView: View {
             Form {
                 Section {
                     TextField("Name", text: $feedName)
+                        .disabled(isLoading)
                     TextField("URL", text: $feedURL)
+                        .disabled(isLoading)
                         .keyboardType(.URL)
+                        .autocorrectionDisabled()
+                        .textContentType(.URL)
+                        .textInputAutocapitalization(.never)
                 }
+                
+                if isLoading {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                        Spacer()
+                    }
+                }
+                
                 Section {
                     Button("Save") {
                         if isValidInput() {
-                            onSave()
-                            isPresented = false
+                            validateNewFeed()
                         } else {
                             showError = true
                         }
                     }
                     .centerHorizontally()
+                    .disabled(isLoading)
                     .alert(isPresented: $showError) {
-                        Alert(title: Text("Invalid Input"), 
-                              message: Text("Please enter a valid name and URL."),
+                        Alert(title: Text("Invalid Input"),
+                              message: Text("Please enter a valid name and a valid feed URL."),
                               dismissButton: .default(Text("OK")))
                     }
                 }
             }
             .navigationTitle(isAdding ? "New Feed" : "Edit Feed")
+        }
+    }
+    
+    private func validateNewFeed() {
+        guard let url = URL(string: feedURL) else {
+            showError = true
+            return
+        }
+        
+        isLoading = true
+        RSSParser.fetchFeedDetails(from: url) { result in
+            self.isLoading = false
+            
+            switch result {
+            case .success(let iconImageURL):
+                self.feedIconURL = iconImageURL
+                self.onSave()
+                isPresented = false
+            case .failure(let error):
+                print("Error fetching feed details: \(error.localizedDescription)")
+                self.showError = true
+            }
         }
     }
     

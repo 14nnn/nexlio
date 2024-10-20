@@ -10,25 +10,83 @@ import FeedKit
 
 /// Parser for RSS feeds.
 class RSSParser {
-    /// Parse RSS, atom or JSON and return a list of News.
-    func parse(data: Foundation.Data) -> [News] {
+    typealias FeedParsingResult = ([News], FeedInfo?)
+    
+    /// Struct containing feed info.
+    struct FeedInfo {
+        /// Icon for feed. In RSS, feed image is used, in atom icon is used, in JSON icon is used as well.
+        let favIcon: URL?
+    }
+    
+    /// Parse RSS, atom or JSON and return a list of News and feed info..
+    func parse(data: Foundation.Data) -> Result<FeedParsingResult, Error> {
         let parser = FeedParser(data: data)
         let result = parser.parse()
         
         switch result {
         case .success(let feed):
+            var feedInfo: FeedInfo? = nil
+            
             switch feed {
             case .rss(let rssFeed):
-                return parseRSSFeed(rssFeed)
+                if let feedImage = rssFeed.image?.link, let parsedFeedImage = URL(string: feedImage) {
+                    feedInfo = FeedInfo(favIcon: parsedFeedImage)
+                }
+                
+                return .success((parseRSSFeed(rssFeed), feedInfo))
             case .atom(let atomFeed):
-                return parseAtomFeed(atomFeed)
+                if let feedImage = atomFeed.icon, let parsedFeedImage = URL(string: feedImage) {
+                    feedInfo = FeedInfo(favIcon: parsedFeedImage)
+                }
+                
+                return .success((parseAtomFeed(atomFeed), nil))
             case .json(let jsonFeed):
-                return parseJSONFeed(jsonFeed)
+                if let feedImage = jsonFeed.icon, let parsedFeedImage = URL(string: feedImage) {
+                    feedInfo = FeedInfo(favIcon: parsedFeedImage)
+                }
+                
+                return .success((parseJSONFeed(jsonFeed), nil))
             }
         case .failure(let error):
-            print("Parsing error: \(error)")
-            return []
+            return .failure(error)
         }
+    }
+    
+    /// This will fetch the feed details. Used to get the feed info such as description and feed icon. This is also a validation step.
+    static func fetchFeedDetails(from url: URL, completion: @escaping (Result<(URL?), Error>) -> Void) {
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "FeedDetailsError", 
+                                            code: 0,
+                                            userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+            
+            let parser = RSSParser()
+            guard case let .success(feed) = parser.parse(data: data) else {
+                completion(.failure(NSError(domain: "FeedDetailsError", 
+                                            code: 0,
+                                            userInfo: [NSLocalizedDescriptionKey: "Feed parsing failed"])))
+                return
+            }
+            
+            var iconImageURL: URL?
+            
+            if let imageURL = feed.1?.favIcon {
+                iconImageURL = imageURL
+                completion(.success(iconImageURL))
+            } else {
+                // Fallback to favicon.ico.
+                let rootDomain = (url.scheme ?? "https") + "://" + url.host!
+                iconImageURL = URL(string: rootDomain)!.appendingPathComponent("favicon.ico")
+                completion(.success(iconImageURL))
+            }
+        }.resume()
     }
     
     /// Parse RSS feed with *magic* logic for handling all kinds of RSS.

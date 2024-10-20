@@ -57,6 +57,31 @@ struct CardView: View {
                             }
                             .frame(height: geometry.size.height / 3)
                         }
+                        
+                    case .twoAoneBCard(news: let news):
+                        VStack(spacing: 0.0) {
+                            HStack(spacing: 0.0) {
+                                ForEach(news.dropFirst().prefix(2)) { newsItem in
+                                    NewsPhotoView(news: newsItem, isLarge: false)
+                                        .frame(width: geometry.size.width / 2)
+                                    
+                                        .onTapGesture {
+                                            if let url = newsItem.link {
+                                                openSafariView(with: url)
+                                            }
+                                        }
+                                }
+                            }
+                            .frame(height: geometry.size.height / 3)
+                            
+                            NewsPhotoView(news: news.first!, isLarge: true)
+                                .frame(height: geometry.size.height * 2 / 3)
+                                .onTapGesture {
+                                    if let url = news.first?.link {
+                                        openSafariView(with: url)
+                                    }
+                                }
+                        }
                     }
                 }
                 .rotation3DEffect(

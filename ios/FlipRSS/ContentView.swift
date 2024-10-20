@@ -58,17 +58,25 @@ struct ContentView: View {
             VStack(spacing: 16.0) {
                 HStack(alignment: .center, spacing: 8.0) {
                     let currentFeed = feeds.isEmpty ? nil : feeds[currentIndex ?? 0]
-                    //if let icon = currentFeed.iconImage {
-                    //    Image(uiImage: icon)
-                    //        .resizable()
-                    //        .scaledToFill()
-                    //        .frame(width: 24.0, height: 24.0)
-                    //}
                     
-                    Text(currentFeed?.name ?? "Unnamed Feed")
-                        .frame(width: .infinity)
-                        .font(.system(size: 28.0, weight: .black, design: .default))
-                        .foregroundColor(.white)
+                    HStack {
+                        if let iconImage = currentFeed?.iconImage,
+                           let iconImageURL = URL(string: iconImage) {
+                            KFImage(iconImageURL)
+                                .placeholder {
+                                    ProgressView()
+                                }
+                                .loadDiskFileSynchronously()
+                                .cacheMemoryOnly()
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 24.0, height: 24.0)
+                        }
+                        
+                        Text(currentFeed?.name ?? "Unnamed Feed")
+                            .font(.system(size: 34.0, weight: .bold, design: .default))
+                            .foregroundColor(.white)
+                    }
                     
                     Spacer()
                     
@@ -81,7 +89,7 @@ struct ContentView: View {
                             .frame(width: 28.0, height: 28.0)
                             .background(
                                 Circle()
-                                .fill(Color.gray.opacity(0.2))
+                                    .fill(Color.gray.opacity(0.2))
                             )
                     }
                 }

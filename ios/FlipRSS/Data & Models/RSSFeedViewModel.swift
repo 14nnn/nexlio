@@ -18,7 +18,13 @@ class RSSFeedViewModel: ObservableObject {
             .map(\.data)
             .map { data -> [News] in
                 let parser = RSSParser()
-                return parser.parse(data: data)
+                
+                switch (parser.parse(data: data)) {
+                case let .success(parsedResult):
+                    return parsedResult.0
+                case let .failure(error):
+                    return []
+                }
             }
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { _ in },

@@ -27,4 +27,5 @@ struct News: Identifiable {
 
 enum Card {
     case oneAtwoBCard(news: [News])
+    case twoAoneBCard(news: [News])
 }
