@@ -18,6 +18,33 @@ class RSSParser {
         let favIcon: URL?
     }
     
+    /// Fetch and parse a feed based on the URL.
+    static func fetchFeed(with url: URL, completion: @escaping (Result<[News], Error>) -> Void) {
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "RSSParserError",
+                                            code: 0,
+                                            userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+            
+            let parser = RSSParser()
+            let result = parser.parse(data: data)
+            
+            switch result {
+            case .success(let feed):
+                completion(.success(feed.0))
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }.resume()
+    }
+    
     /// Parse RSS, atom or JSON and return a list of News and feed info..
     func parse(data: Foundation.Data) -> Result<FeedParsingResult, Error> {
         let parser = FeedParser(data: data)
@@ -61,7 +88,7 @@ class RSSParser {
             }
             
             guard let data = data else {
-                completion(.failure(NSError(domain: "FeedDetailsError", 
+                completion(.failure(NSError(domain: "FeedDetailsError",
                                             code: 0,
                                             userInfo: [NSLocalizedDescriptionKey: "No data received"])))
                 return
@@ -69,7 +96,7 @@ class RSSParser {
             
             let parser = RSSParser()
             guard case let .success(feed) = parser.parse(data: data) else {
-                completion(.failure(NSError(domain: "FeedDetailsError", 
+                completion(.failure(NSError(domain: "FeedDetailsError",
                                             code: 0,
                                             userInfo: [NSLocalizedDescriptionKey: "Feed parsing failed"])))
                 return

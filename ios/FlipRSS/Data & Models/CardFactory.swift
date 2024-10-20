@@ -19,7 +19,14 @@ class CardFactory {
             let endIndex = startIndex + 3
             let newsSlice = Array(news[startIndex..<endIndex])
             if newsSlice.count == 3 {
-                let card = Card.oneAtwoBCard(news: newsSlice)
+                let card: Card
+                
+                if index % 2 == 0 {
+                    card = Card.oneAtwoBCard(news: newsSlice)
+                } else {
+                    card = Card.twoAoneBCard(news: newsSlice)
+                }
+                
                 cards.append(card)
             }
         }

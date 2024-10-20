@@ -47,6 +47,9 @@ struct CardsStackView: View {
     /// Cards.
     var cards: [Card] = []
     
+    /// On refresh handler.
+    let onRefresh: (() -> Void)?
+    
     /// Holds the current card rotation angle.
     @State private var cardRotationAngle = 0.0
     
@@ -250,7 +253,7 @@ struct CardsStackView: View {
                                     }
                                     
                                     if cardIndex == 0 && dragOffset > CardsStackView.minimalDrag {
-                                        NotificationCenter.default.post(name: .didPullToRefresh, object: id)
+                                        onRefresh?()
                                     }
                                     
                                     return

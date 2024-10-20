@@ -7,28 +7,24 @@ struct CardsStackHolderView: View {
     @State private var currentIndex: Int = 0
     
     let id = UUID()
-    let feedURL: URL
+    let feed: Feed
     
     var body: some View {
-        CardsStackView(id: id, cardIndex: currentIndex, cards: viewModel.cards)
-            .onReceive(NotificationCenter.default.publisher(for: .didFlipCardStackView)) { notification in
-                if let object = notification.object as? CardsStackView.NotificationObject, object.id == id {
-                    if object.direction == .forward && currentIndex < viewModel.cards.count - 1 {
-                        currentIndex += 1
-                    } else if object.direction == .backward && currentIndex > 0 {
-                        currentIndex -= 1
-                    }
+        CardsStackView(id: id, cardIndex: currentIndex, cards: viewModel.cards, onRefresh: {
+            viewModel.fetchRSSFeed(from: feed, forceRefresh: true)
+        })
+        .onReceive(NotificationCenter.default.publisher(for: .didFlipCardStackView)) { notification in
+            if let object = notification.object as? CardsStackView.NotificationObject, object.id == id {
+                if object.direction == .forward && currentIndex < viewModel.cards.count - 1 {
+                    currentIndex += 1
+                } else if object.direction == .backward && currentIndex > 0 {
+                    currentIndex -= 1
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .didPullToRefresh)) { notification in
-                if let notificationId = notification.object as? UUID, id == notificationId {
-                    viewModel.cards = []
-                    viewModel.fetchRSSFeed(from: feedURL)
-                }
-            }
-            .onAppear {
-                viewModel.fetchRSSFeed(from: feedURL)
-            }
+        }
+        .onAppear {
+            viewModel.fetchRSSFeed(from: feed)
+        }
     }
 }
 
@@ -57,25 +53,40 @@ struct ContentView: View {
             
             VStack(spacing: 16.0) {
                 HStack(alignment: .center, spacing: 8.0) {
-                    let currentFeed = feeds.isEmpty ? nil : feeds[currentIndex ?? 0]
+                    let currentIndexWithDefault = currentIndex ?? 0
+                    let areFeedsEmpty = feeds.isEmpty
+                    let isCurrentIndexAboveFeedCount = currentIndexWithDefault < feeds.count
+                    let currentFeed = (!areFeedsEmpty && isCurrentIndexAboveFeedCount) ? feeds[currentIndex ?? 0] : nil
                     
-                    HStack {
-                        if let iconImage = currentFeed?.iconImage,
-                           let iconImageURL = URL(string: iconImage) {
-                            KFImage(iconImageURL)
-                                .placeholder {
-                                    ProgressView()
-                                }
-                                .loadDiskFileSynchronously()
-                                .cacheMemoryOnly()
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 24.0, height: 24.0)
+                    
+                    
+                    VStack(alignment: .leading, spacing: 2.0) {
+                        HStack {
+                            if let iconImage = currentFeed?.iconImage,
+                               let iconImageURL = URL(string: iconImage) {
+                                KFImage(iconImageURL)
+                                    .placeholder {
+                                        ProgressView()
+                                    }
+                                    .loadDiskFileSynchronously()
+                                    .cacheMemoryOnly()
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 24.0, height: 24.0)
+                            }
+                            
+                            Text(currentFeed?.name ?? "Unnamed Feed")
+                                .font(.system(size: 34.0, weight: .bold, design: .default))
+                                .foregroundColor(.white)
                         }
                         
-                        Text(currentFeed?.name ?? "Unnamed Feed")
-                            .font(.system(size: 34.0, weight: .bold, design: .default))
-                            .foregroundColor(.white)
+                        if let lastRefreshDate = currentFeed?.lastRefreshDate {
+                            RelativeTimeLabel(targetDate: lastRefreshDate, style: { label in
+                                label
+                                    .font(.system(size: 16.0, weight: .regular, design: .default))
+                                    .foregroundColor(.white.opacity(0.8))
+                            })
+                        }
                     }
                     
                     Spacer()
@@ -100,7 +111,7 @@ struct ContentView: View {
                     LazyHStack(spacing: 0.0) {
                         ForEach(feeds.indices, id: \.self) { i in
                             let feed = feeds[i]
-                            CardsStackHolderView(feedURL: feed.url!)
+                            CardsStackHolderView(feed: feed)
                                 .frame(width: cardsWidth, height: .infinity)
                                 .zIndex(currentIndex == i ? 10 : 0)
                                 .disabled(currentIndex != i)
