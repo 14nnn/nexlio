@@ -37,6 +37,8 @@ struct FeedSettingsView: View {
                         newFeedName = feed.name ?? ""
                         newFeedURL = feed.url?.absoluteString ?? ""
                         isEditingFeed = true
+                    }, onToggleFavorite: {
+                        toggleFavorite(for: feed)
                     })
                 }
                 .onDelete(perform: deleteFeeds)
@@ -128,11 +130,18 @@ struct FeedSettingsView: View {
             saveContext()
         }
     }
+    
+    private func toggleFavorite(for feed: Feed) {
+        feed.isFavorite.toggle()
+        saveContext()
+        NotificationCenter.default.post(name: .refreshFeeds, object: nil)
+    }
 }
 
 struct FeedRow: View {
     @ObservedObject var feed: Feed
     var onEdit: () -> Void
+    var onToggleFavorite: () -> Void
     
     var body: some View {
         HStack {
@@ -149,6 +158,16 @@ struct FeedRow: View {
             }
             
             Text(feed.name ?? "Unnamed Feed")
+            
+            Spacer()
+            
+            Button(action: {
+                onToggleFavorite()
+            }) {
+                Image(systemName: feed.isFavorite ? "star.fill" : "star")
+                    .foregroundColor(feed.isFavorite ? .yellow : .gray)
+            }
+            .buttonStyle(PlainButtonStyle())
         }
         .contentShape(Rectangle())
         .onTapGesture {

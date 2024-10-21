@@ -13,14 +13,22 @@ class RSSFeedViewModel: ObservableObject {
     
     private var cancellable: AnyCancellable?
     
-    func fetchRSSFeed(from feed: Feed, forceRefresh: Bool = false) {
+    func fetchRSSFeed(from feed: Feed?, forceRefresh: Bool = false) {
         FeedDataManager.shared.fetchNewsForFeed(feed, forceRefresh: forceRefresh)
         
-        cancellable = FeedDataManager.shared.$newsByFeed
-            .map { $0[feed] ?? [] }
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] news in
-                self?.cards = CardFactory.createCards(from: news)
-            }
+        if let feed = feed {
+            cancellable = FeedDataManager.shared.$newsByFeed
+                .map { $0[feed] ?? [] }
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] news in
+                    self?.cards = CardFactory.createCards(from: news)
+                }
+        } else {
+            cancellable = FeedDataManager.shared.$favoritesNews
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] news in
+                    self?.cards = CardFactory.createCards(from: news)
+                }
+        }
     }
 }
