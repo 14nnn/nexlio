@@ -12,6 +12,7 @@ struct SettingsEditFeedView: View {
     @Binding var isPresented: Bool
     @Binding var feedName: String
     @Binding var feedURL: String
+    @Binding var feedDescription: String?
     @Binding var feedIconURL: URL?
     
     @Environment(\.managedObjectContext) private var viewContext
@@ -78,8 +79,9 @@ struct SettingsEditFeedView: View {
             self.isLoading = false
             
             switch result {
-            case .success(let iconImageURL):
+            case .success((let iconImageURL, let description)):
                 self.feedIconURL = iconImageURL
+                self.feedDescription = description
                 self.onSave()
                 isPresented = false
             case .failure(let error):

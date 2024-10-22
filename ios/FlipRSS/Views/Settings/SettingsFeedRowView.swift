@@ -17,7 +17,12 @@ struct SettingsFeedRowView: View {
         HStack {
             FeedIconView(feed: feed, size: 24.0)
             
-            Text(feed.name ?? "Unnamed Feed")
+            VStack(alignment: .leading, spacing: 2.0) {
+                Text(feed.name ?? "Unnamed Feed")
+                Text(feed.feedDescription ?? "")
+                    .foregroundStyle(.gray)
+                    .font(.footnote)
+            }
             
             Spacer()
             

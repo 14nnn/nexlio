@@ -26,6 +26,7 @@ struct SettingsView: View {
     
     @State private var newFeedURL = ""
     @State private var newFeedName = ""
+    @State private var newFeedDescription: String? = ""
     @State private var newFeedImageURL: URL? = nil
     
     var body: some View {
@@ -63,22 +64,24 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $isAddingFeed) {
                 SettingsEditFeedView(isPresented: $isAddingFeed,
-                            feedName: $newFeedName,
-                            feedURL: $newFeedURL,
-                            feedIconURL: $newFeedImageURL,
-                            feedCount: feedCount,
-                            onSave: saveNewFeed,
-                            isAdding: true)
+                                     feedName: $newFeedName,
+                                     feedURL: $newFeedURL,
+                                     feedDescription: $newFeedDescription,
+                                     feedIconURL: $newFeedImageURL,
+                                     feedCount: feedCount,
+                                     onSave: saveNewFeed,
+                                     isAdding: true)
                 .environment(\.managedObjectContext, viewContext)
             }
             .sheet(isPresented: $isEditingFeed) {
                 SettingsEditFeedView(isPresented: $isEditingFeed,
-                            feedName: $newFeedName,
-                            feedURL: $newFeedURL,
-                            feedIconURL: $newFeedImageURL,
-                            feedCount: feedCount,
-                            onSave: saveEditedFeed,
-                            isAdding: false)
+                                     feedName: $newFeedName,
+                                     feedURL: $newFeedURL,
+                                     feedDescription: $newFeedDescription,
+                                     feedIconURL: $newFeedImageURL,
+                                     feedCount: feedCount,
+                                     onSave: saveEditedFeed,
+                                     isAdding: false)
                 .environment(\.managedObjectContext, viewContext)
             }
         }
@@ -118,6 +121,7 @@ struct SettingsView: View {
         newFeed.name = newFeedName
         newFeed.url = URL(string: newFeedURL)
         newFeed.iconImage = newFeedImageURL?.absoluteString
+        newFeed.feedDescription = newFeedDescription
         newFeed.sortOrder = Int16(feedCount)
         saveContext()
     }
@@ -127,6 +131,7 @@ struct SettingsView: View {
             feed.name = newFeedName
             feed.url = URL(string: newFeedURL)
             feed.iconImage = newFeedImageURL?.absoluteString
+            feed.feedDescription = newFeedDescription
             saveContext()
         }
     }

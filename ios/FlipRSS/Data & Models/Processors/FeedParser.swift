@@ -59,16 +59,21 @@ class FeedParser {
             switch feed {
             case .rss(let rssFeed):
                 let feedDescription = rssFeed.description
+                var feedIcon: URL? = nil
                 if let feedImage = rssFeed.image?.link, let parsedFeedImage = URL(string: feedImage) {
-                    feedInfo = FeedInfo(favIcon: parsedFeedImage, description: feedDescription)
+                    feedIcon = parsedFeedImage
                 }
+                feedInfo = FeedInfo(favIcon: feedIcon, description: feedDescription)
                 
                 return .success((parseRSSFeed(rssFeed), feedInfo))
             case .atom(let atomFeed):
                 let feedDescription = atomFeed.title
+                var feedIcon: URL? = nil
+                
                 if let feedImage = atomFeed.icon, let parsedFeedImage = URL(string: feedImage) {
-                    feedInfo = FeedInfo(favIcon: parsedFeedImage, description: feedDescription)
+                    feedIcon = parsedFeedImage
                 }
+                feedInfo = FeedInfo(favIcon: feedIcon, description: feedDescription)
                 
                 return .success((parseAtomFeed(atomFeed), nil))
             case .json(let jsonFeed):
@@ -85,7 +90,7 @@ class FeedParser {
     }
     
     /// This will fetch the feed details. Used to get the feed info such as description and feed icon. This is also a validation step.
-    static func fetchFeedDetails(from url: URL, completion: @escaping (Result<(URL?), Error>) -> Void) {
+    static func fetchFeedDetails(from url: URL, completion: @escaping (Result<(URL?, String?), Error>) -> Void) {
         URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 completion(.failure(error))
@@ -111,12 +116,12 @@ class FeedParser {
             
             if let imageURL = feed.1?.favIcon {
                 iconImageURL = imageURL
-                completion(.success(iconImageURL))
+                completion(.success((iconImageURL, feed.1?.description)))
             } else {
                 // Fallback to favicon.ico.
                 let rootDomain = (url.scheme ?? "https") + "://" + url.host!
                 iconImageURL = URL(string: rootDomain)!.appendingPathComponent("favicon.ico")
-                completion(.success(iconImageURL))
+                completion(.success((iconImageURL, feed.1?.description)))
             }
         }.resume()
     }

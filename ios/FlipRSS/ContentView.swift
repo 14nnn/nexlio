@@ -7,6 +7,10 @@ struct FeedHeaderView: View {
     let hasFavorites: Bool
     let feeds: FetchedResults<Feed>
     
+    var lastRefreshTimeFavorites: Date? {
+        feeds.filter { $0.isFavorite }.first?.lastRefreshDate
+    }
+    
     var body: some View {
         let currentIndexWithDefault = (currentIndex ?? 0)
         let isFavorite = currentIndexWithDefault == 0 && hasFavorites
@@ -22,7 +26,16 @@ struct FeedHeaderView: View {
                 Text("Favorites")
                     .font(.system(size: 34.0, weight: .bold, design: .default))
                     .foregroundColor(.white)
-            }.padding(.bottom, 21.0)
+            }
+            
+            if let lastRefreshTimeFavorites = lastRefreshTimeFavorites {
+                RelativeTimeText(targetDate: lastRefreshTimeFavorites, style: { label in
+                    label
+                        .font(.system(size: 16.0, weight: .regular, design: .default))
+                        .foregroundColor(.white.opacity(0.8))
+                })
+            }
+            
         } else {
             let areFeedsEmpty = feeds.isEmpty
             let isCurrentIndexAboveFeedCount = currentIndexWithDefault < (hasFavorites ? feeds.count + 1 : feeds.count)
@@ -92,82 +105,87 @@ struct ContentView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            let padding = 0.0
-            let aspectRatioCards = 16.0 / 10.0
-            let cardsWidth = geometry.size.width - (padding * 4.0)
-            
-            VStack(spacing: 16.0) {
-                HStack(alignment: .center, spacing: 8.0) {
-                    VStack(alignment: .leading, spacing: 2.0) {
-                        FeedHeaderView(currentIndex: currentIndex, 
-                                       hasFavorites: hasFavorites,
-                                       feeds: feeds)
-                    }
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        showSettings = true
-                    }) {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 22.0))
-                            .foregroundColor(Color.white)
-                            .frame(width: 28.0, height: 28.0)
-                            .background(
-                                Circle()
-                                    .fill(Color.gray.opacity(0.2))
-                            )
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 10.0)
+            if feeds.isEmpty {
+                EmptyFeedView(onAddTapped: {
+                    showSettings = true
+                })
+            } else {
+                let padding = 0.0
+                let cardsWidth = geometry.size.width - (padding * 4.0)
                 
-                ScrollView(.horizontal) {
-                    LazyHStack(spacing: 0.0) {
-                        ForEach(0..<(hasFavorites ? (feeds.count + 1) : feeds.count), id: \.self) { i in
-                            if i == 0 && hasFavorites { // Favorites
-                                FeedView(feed: nil)
-                                    .frame(width: cardsWidth, height: .infinity)
-                                    .zIndex(currentIndex == i ? 10 : 0)
-                            } else {
-                                let feed = feeds[hasFavorites ? i - 1 : i]
-                                FeedView(feed: feed)
-                                    .frame(width: cardsWidth, height: .infinity)
-                                    .zIndex(currentIndex == i ? 10 : 0)
+                VStack(spacing: 16.0) {
+                    HStack(alignment: .center, spacing: 8.0) {
+                        VStack(alignment: .leading, spacing: 2.0) {
+                            FeedHeaderView(currentIndex: currentIndex,
+                                           hasFavorites: hasFavorites,
+                                           feeds: feeds)
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            showSettings = true
+                        }) {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 22.0))
+                                .foregroundColor(Color.white)
+                                .frame(width: 28.0, height: 28.0)
+                                .background(
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.2))
+                                )
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 10.0)
+                    
+                    ScrollView(.horizontal) {
+                        LazyHStack(spacing: 0.0) {
+                            ForEach(0..<(hasFavorites ? (feeds.count + 1) : feeds.count), id: \.self) { i in
+                                if i == 0 && hasFavorites { // Favorites
+                                    FeedView(feed: nil)
+                                        .frame(width: cardsWidth, height: .infinity)
+                                        .zIndex(currentIndex == i ? 10 : 0)
+                                } else {
+                                    let feed = feeds[hasFavorites ? i - 1 : i]
+                                    FeedView(feed: feed)
+                                        .frame(width: cardsWidth, height: .infinity)
+                                        .zIndex(currentIndex == i ? 10 : 0)
+                                }
                             }
                         }
+                        .scrollTargetLayout()
                     }
-                    .scrollTargetLayout()
+                    .id(refreshID)
+                    .scrollIndicators(.never)
+                    .scrollClipDisabled()
+                    .scrollPosition(id: $currentIndex)
+                    .scrollTargetBehavior(.paging)
+                    .safeAreaPadding(.zero)
+                    .onReceive(NotificationCenter.default.publisher(for: .refreshFeeds)) { _ in
+                        refreshID = UUID()
+                        currentIndex = 0
+                    }
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                dragOffset = value.translation
+                                isVerticalDrag = abs(dragOffset.height) > abs(dragOffset.width)
+                            }
+                            .onEnded { _ in
+                                dragOffset = .zero
+                                isVerticalDrag = false
+                            }
+                    )
+                    .simultaneousGesture(
+                        DragGesture().onChanged { _ in }.onEnded { _ in }
+                    )
+                    
+                    FeedPagesView(feedCount: feeds.count,
+                                  hasFavorites: hasFavorites,
+                                  currentIndex: currentIndex ?? 0)
+                    .zIndex(-1)
                 }
-                .id(refreshID)
-                .scrollIndicators(.never)
-                .scrollClipDisabled()
-                .scrollPosition(id: $currentIndex)
-                .scrollTargetBehavior(.paging)
-                .safeAreaPadding(.zero)
-                .onReceive(NotificationCenter.default.publisher(for: .refreshFeeds)) { _ in
-                    refreshID = UUID()
-                    currentIndex = 0
-                }
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            dragOffset = value.translation
-                            isVerticalDrag = abs(dragOffset.height) > abs(dragOffset.width)
-                        }
-                        .onEnded { _ in
-                            dragOffset = .zero
-                            isVerticalDrag = false
-                        }
-                )
-                .simultaneousGesture(
-                    DragGesture().onChanged { _ in }.onEnded { _ in }
-                )
-                
-                FeedPagesView(feedCount: feeds.count,
-                              hasFavorites: hasFavorites,
-                              currentIndex: currentIndex ?? 0)
-                .zIndex(-1)
             }
         }
         .background(Color.black)

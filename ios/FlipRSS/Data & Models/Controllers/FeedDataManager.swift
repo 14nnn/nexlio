@@ -123,7 +123,7 @@ class FeedDataManager: ObservableObject {
             self.fetchNewsFromCoreData(for: feed)
         }
     }
-
+    
     /// Check if feed should be refreshed based on lastRefreshDate.
     private func shouldRefresh(_ feed: Feed) -> Bool {
         guard let lastRefreshDate = feed.lastRefreshDate else {
@@ -131,7 +131,7 @@ class FeedDataManager: ObservableObject {
         }
         return Date().timeIntervalSince(lastRefreshDate) > refreshInterval
     }
-
+    
     /// Refresh feed by fetching from remote, updating Core Data.
     private func refreshFeed(_ feed: Feed, completion: @escaping () -> Void) {
         guard let feedUrl = feed.url else {
@@ -160,19 +160,35 @@ class FeedDataManager: ObservableObject {
     
     /// Update news in Core Data.
     private func updateNewsInCoreData(_ newsItems: [News], for feed: Feed) {
-        // Create or update news items based on their links.
-        for news in newsItems {
-            let fetchRequest: NSFetchRequest<NewsItem> = NewsItem.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "link == %@", (news.link?.absoluteString)!)
+        // Create a set of links from new items for faster lookup
+        let newItemLinks = Set(newsItems.compactMap { $0.link?.absoluteString })
+        
+        // First, fetch all existing news items for this feed
+        let fetchRequest: NSFetchRequest<NewsItem> = NewsItem.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "feed == %@", feed)
+        
+        do {
+            let existingNewsItems = try viewContext.fetch(fetchRequest)
             
-            do {
-                let existingNewsItems = try viewContext.fetch(fetchRequest)
-                if let existingNewsItem = existingNewsItems.first {
+            // Create a dictionary of existing items by link for faster lookup
+            let existingItemsByLink: [String: NewsItem] = Dictionary(
+                existingNewsItems.compactMap { newsItem in
+                    guard let link = newsItem.link?.absoluteString else { return nil }
+                    return (link, newsItem)
+                },
+                uniquingKeysWith: { first, _ in first }
+            )
+            
+            // Update or create news items
+            for news in newsItems {
+                guard let linkString = news.link?.absoluteString else { continue }
+                
+                if let existingItem = existingItemsByLink[linkString] {
                     // Update existing news item
-                    existingNewsItem.title = news.title
-                    existingNewsItem.details = news.details
-                    existingNewsItem.date = news.date
-                    existingNewsItem.imageURL = news.imageURL
+                    existingItem.title = news.title
+                    existingItem.details = news.details
+                    existingItem.date = news.date
+                    existingItem.imageURL = news.imageURL
                 } else {
                     // Create new news item
                     let newsItem = NewsItem(context: viewContext)
@@ -184,12 +200,12 @@ class FeedDataManager: ObservableObject {
                     newsItem.link = news.link
                     newsItem.feed = feed
                 }
-            } catch {
-                print("Failed to fetch existing news item: \(error)")
             }
+            
+            saveContext()
+        } catch {
+            print("Failed to fetch existing news items: \(error)")
         }
-        
-        saveContext()
     }
     
     /// Save Core Data context.
