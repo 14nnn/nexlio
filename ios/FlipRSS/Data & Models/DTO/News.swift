@@ -1,8 +1,8 @@
 //
-//  Models.swift
+//  News.swift
 //  FlipRSS
 //
-//  Created by Darian on 14.10.2024..
+//  Created by Darian on 22.10.2024..
 //
 
 import Foundation
@@ -33,9 +33,4 @@ struct News: Identifiable {
         self.imageURL = newsItem.imageURL
         self.link = newsItem.link
     }
-}
-
-enum Card {
-    case oneAtwoBCard(news: [News])
-    case twoAoneBCard(news: [News])
 }

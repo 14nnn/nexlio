@@ -1,5 +1,5 @@
 //
-//  RelativeTimeLabel.swift
+//  RelativeTimeText.swift
 //  FlipRSS
 //
 //  Created by Darian on 17.10.2024..
@@ -9,7 +9,7 @@ import SwiftUI
 
 import SwiftUI
 
-struct RelativeTimeLabel: View {
+struct RelativeTimeText: View {
     @State private var currentDate: Date = Date()
     
     let targetDate: Date
@@ -23,7 +23,8 @@ struct RelativeTimeLabel: View {
             }
     }
     
-    func relativeTime(from date: Date, currentDate: Date) -> String {
+    /// Calculates relative time between currentDate and date expressed in relative time such as "just now", "a minute ago".
+    private func relativeTime(from date: Date, currentDate: Date) -> String {
         let secondsDifference = Int(date.timeIntervalSince(currentDate))
         let absSeconds = abs(secondsDifference)
         
@@ -70,11 +71,11 @@ struct RelativeTimeLabel: View {
 
 #Preview {
     VStack {
-        RelativeTimeLabel(targetDate: Calendar.current.date(byAdding: .day, value: -1, to: Date())!) { text in
+        RelativeTimeText(targetDate: Calendar.current.date(byAdding: .day, value: -1, to: Date())!) { text in
             text.font(.headline).foregroundColor(.blue)
         }
         
-        RelativeTimeLabel(targetDate: Calendar.current.date(byAdding: .hour, value: -2, to: Date())!) { text in
+        RelativeTimeText(targetDate: Calendar.current.date(byAdding: .hour, value: -2, to: Date())!) { text in
             text.font(.title).foregroundColor(.red)
         }
     }

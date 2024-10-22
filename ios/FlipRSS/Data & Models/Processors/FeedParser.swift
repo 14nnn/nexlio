@@ -1,5 +1,5 @@
 //
-//  RSSParser.swift
+//  FeedParser.swift
 //  FlipRSS
 //
 //  Created by Darian on 15.10.2024..
@@ -9,13 +9,15 @@ import SwiftUI
 import FeedKit
 
 /// Parser for RSS feeds.
-class RSSParser {
+class FeedParser {
     typealias FeedParsingResult = ([News], FeedInfo?)
     
     /// Struct containing feed info.
     struct FeedInfo {
         /// Icon for feed. In RSS, feed image is used, in atom icon is used, in JSON icon is used as well.
         let favIcon: URL?
+        
+        let description: String?
     }
     
     /// Fetch and parse a feed based on the URL.
@@ -33,7 +35,7 @@ class RSSParser {
                 return
             }
             
-            let parser = RSSParser()
+            let parser = FeedParser()
             let result = parser.parse(data: data)
             
             switch result {
@@ -47,7 +49,7 @@ class RSSParser {
     
     /// Parse RSS, atom or JSON and return a list of News and feed info..
     func parse(data: Foundation.Data) -> Result<FeedParsingResult, Error> {
-        let parser = FeedParser(data: data)
+        let parser = FeedKit.FeedParser(data: data)
         let result = parser.parse()
         
         switch result {
@@ -56,20 +58,23 @@ class RSSParser {
             
             switch feed {
             case .rss(let rssFeed):
+                let feedDescription = rssFeed.description
                 if let feedImage = rssFeed.image?.link, let parsedFeedImage = URL(string: feedImage) {
-                    feedInfo = FeedInfo(favIcon: parsedFeedImage)
+                    feedInfo = FeedInfo(favIcon: parsedFeedImage, description: feedDescription)
                 }
                 
                 return .success((parseRSSFeed(rssFeed), feedInfo))
             case .atom(let atomFeed):
+                let feedDescription = atomFeed.title
                 if let feedImage = atomFeed.icon, let parsedFeedImage = URL(string: feedImage) {
-                    feedInfo = FeedInfo(favIcon: parsedFeedImage)
+                    feedInfo = FeedInfo(favIcon: parsedFeedImage, description: feedDescription)
                 }
                 
                 return .success((parseAtomFeed(atomFeed), nil))
             case .json(let jsonFeed):
+                let feedDescription = jsonFeed.description
                 if let feedImage = jsonFeed.icon, let parsedFeedImage = URL(string: feedImage) {
-                    feedInfo = FeedInfo(favIcon: parsedFeedImage)
+                    feedInfo = FeedInfo(favIcon: parsedFeedImage, description: feedDescription)
                 }
                 
                 return .success((parseJSONFeed(jsonFeed), nil))
@@ -94,7 +99,7 @@ class RSSParser {
                 return
             }
             
-            let parser = RSSParser()
+            let parser = FeedParser()
             guard case let .success(feed) = parser.parse(data: data) else {
                 completion(.failure(NSError(domain: "FeedDetailsError",
                                             code: 0,

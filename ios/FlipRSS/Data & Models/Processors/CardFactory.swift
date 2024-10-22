@@ -22,9 +22,9 @@ class CardFactory {
                 let card: Card
                 
                 if index % 2 == 0 {
-                    card = Card.oneAtwoBCard(news: newsSlice)
+                    card = Card.layoutA(news: newsSlice)
                 } else {
-                    card = Card.twoAoneBCard(news: newsSlice)
+                    card = Card.layoutB(news: newsSlice)
                 }
                 
                 cards.append(card)
@@ -35,7 +35,7 @@ class CardFactory {
             let startIndex = numberOfFullCards * 3
             let newsSlice = Array(news[startIndex...])
             if !newsSlice.isEmpty {
-                let card = Card.oneAtwoBCard(news: newsSlice)
+                let card = Card.layoutA(news: newsSlice)
                 cards.append(card)
             }
         }

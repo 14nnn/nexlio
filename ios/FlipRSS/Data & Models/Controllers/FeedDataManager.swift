@@ -19,6 +19,7 @@ class FeedDataManager: ObservableObject {
     @Published var newsByFeed: [Feed: [News]] = [:]
     @Published var favoritesNews: [News] = []
     
+    /// Fetches news for one feed, or for all feeds. If nil, all feeds. Force refresh will force a refresh, while default is to load new feed items after 15 minutes.
     func fetchNewsForFeed(_ feed: Feed?, forceRefresh: Bool = false) {
         DispatchQueue.main.async {
             if let feed = feed {
@@ -64,6 +65,7 @@ class FeedDataManager: ObservableObject {
         }
     }
     
+    /// This will return all feed items from CoreData.
     private func fetchNewsFromCoreData(for feed: Feed?) {
         let request: NSFetchRequest<NewsItem> = NewsItem.fetchRequest()
         
@@ -93,7 +95,7 @@ class FeedDataManager: ObservableObject {
         }
     }
     
-    /// Refresh favorite feeds or a specific feed
+    /// Refresh favorite feeds or a specific feed.
     private func refreshFeeds(_ feed: Feed? = nil, forceRefresh: Bool = false) {
         let feedsToRefresh: [Feed]
         
@@ -122,7 +124,7 @@ class FeedDataManager: ObservableObject {
         }
     }
 
-    /// Check if feed should be refreshed based on lastRefreshDate
+    /// Check if feed should be refreshed based on lastRefreshDate.
     private func shouldRefresh(_ feed: Feed) -> Bool {
         guard let lastRefreshDate = feed.lastRefreshDate else {
             return true
@@ -137,7 +139,7 @@ class FeedDataManager: ObservableObject {
             return
         }
         
-        RSSParser.fetchFeed(with: feedUrl) { [weak self] result in
+        FeedParser.fetchFeed(with: feedUrl) { [weak self] result in
             guard let self = self else {
                 completion()
                 return
@@ -156,7 +158,7 @@ class FeedDataManager: ObservableObject {
         }
     }
     
-    /// Update news in Core Data
+    /// Update news in Core Data.
     private func updateNewsInCoreData(_ newsItems: [News], for feed: Feed) {
         // Create or update news items based on their links.
         for news in newsItems {
@@ -190,7 +192,7 @@ class FeedDataManager: ObservableObject {
         saveContext()
     }
     
-    /// Save Core Data context
+    /// Save Core Data context.
     private func saveContext() {
         do {
             try viewContext.save()
@@ -199,7 +201,7 @@ class FeedDataManager: ObservableObject {
         }
     }
     
-    /// Start periodic refresh timer
+    /// Starts periodic refresh timer.
     func startRefreshTimer() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) { [weak self] _ in
             guard let self = self else { return }
@@ -207,7 +209,7 @@ class FeedDataManager: ObservableObject {
         }
     }
     
-    /// Invalidate refresh timer
+    /// Invalidates refresh timer.
     func invalidateRefreshTimer() {
         refreshTimer?.invalidate()
         refreshTimer = nil

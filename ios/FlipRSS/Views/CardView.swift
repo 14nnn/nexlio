@@ -33,9 +33,9 @@ struct CardView: View {
             VStack(spacing: 0.0) {
                 VStack(spacing: 0.0) {
                     switch (card) {
-                    case let .oneAtwoBCard(news):
+                    case let .layoutA(news):
                         VStack(spacing: 0.0) {
-                            NewsPhotoView(news: news.first!, isLarge: true)
+                            NewsItemView(news: news.first!, isLarge: true)
                                 .frame(height: geometry.size.height * 2 / 3)
                                 .onTapGesture {
                                     if let url = news.first?.link {
@@ -45,7 +45,7 @@ struct CardView: View {
                             
                             HStack(spacing: 0.0) {
                                 ForEach(news.dropFirst().prefix(2)) { newsItem in
-                                    NewsPhotoView(news: newsItem, isLarge: false)
+                                    NewsItemView(news: newsItem, isLarge: false)
                                         .frame(width: geometry.size.width / 2)
                                     
                                         .onTapGesture {
@@ -58,11 +58,11 @@ struct CardView: View {
                             .frame(height: geometry.size.height / 3)
                         }
                         
-                    case .twoAoneBCard(news: let news):
+                    case .layoutB(news: let news):
                         VStack(spacing: 0.0) {
                             HStack(spacing: 0.0) {
                                 ForEach(news.dropFirst().prefix(2)) { newsItem in
-                                    NewsPhotoView(news: newsItem, isLarge: false)
+                                    NewsItemView(news: newsItem, isLarge: false)
                                         .frame(width: geometry.size.width / 2)
                                     
                                         .onTapGesture {
@@ -74,7 +74,7 @@ struct CardView: View {
                             }
                             .frame(height: geometry.size.height / 3)
                             
-                            NewsPhotoView(news: news.first!, isLarge: true)
+                            NewsItemView(news: news.first!, isLarge: true)
                                 .frame(height: geometry.size.height * 2 / 3)
                                 .onTapGesture {
                                     if let url = news.first?.link {
@@ -84,6 +84,7 @@ struct CardView: View {
                         }
                     }
                 }
+                // When the card is "flipped" we need to mirror the content so it looks right.
                 .rotation3DEffect(
                     Angle(degrees: isFlipped ? .angles180 : 0),
                     axis: (x: 1.0, y: 0.0, z: 0.0)
@@ -114,16 +115,5 @@ struct CardView: View {
     /// Will open a Safari view controller to view the article.
     private func openSafariView(with url: URL) {
         selectedURL = url
-    }
-}
-
-struct SafariView: UIViewControllerRepresentable {
-    let url: URL
-    
-    func makeUIViewController(context: UIViewControllerRepresentableContext<SafariView>) -> SFSafariViewController {
-        return SFSafariViewController(url: url)
-    }
-    
-    func updateUIViewController(_ uiViewController: SFSafariViewController, context: UIViewControllerRepresentableContext<SafariView>) {
     }
 }

@@ -2,33 +2,75 @@ import SwiftUI
 import Kingfisher
 import CoreData
 
-struct CardsStackHolderView: View {
-    @StateObject private var viewModel = RSSFeedViewModel()
-    @State private var currentIndex: Int = 0
-    
-    let id = UUID()
-    let feed: Feed?
+struct FeedHeaderView: View {
+    let currentIndex: Int?
+    let hasFavorites: Bool
+    let feeds: FetchedResults<Feed>
     
     var body: some View {
-        CardsStackView(id: id, cardIndex: currentIndex, cards: viewModel.cards, onRefresh: {
-            viewModel.fetchRSSFeed(from: feed, forceRefresh: true)
-        })
-        .onReceive(NotificationCenter.default.publisher(for: .didFlipCardStackView)) { notification in
-            if let object = notification.object as? CardsStackView.NotificationObject, object.id == id {
-                if object.direction == .forward && currentIndex < viewModel.cards.count - 1 {
-                    currentIndex += 1
-                } else if object.direction == .backward && currentIndex > 0 {
-                    currentIndex -= 1
-                }
+        let currentIndexWithDefault = (currentIndex ?? 0)
+        let isFavorite = currentIndexWithDefault == 0 && hasFavorites
+        
+        // Feed header view.
+        if isFavorite {
+            HStack {
+                Image(systemName: "star.fill")
+                    .resizable()
+                    .frame(width: 24.0, height: 24.0)
+                    .foregroundColor(.yellow)
+                
+                Text("Favorites")
+                    .font(.system(size: 34.0, weight: .bold, design: .default))
+                    .foregroundColor(.white)
+            }.padding(.bottom, 21.0)
+        } else {
+            let areFeedsEmpty = feeds.isEmpty
+            let isCurrentIndexAboveFeedCount = currentIndexWithDefault < (hasFavorites ? feeds.count + 1 : feeds.count)
+            let currentFeed = (!areFeedsEmpty && isCurrentIndexAboveFeedCount) ? feeds[hasFavorites ? (currentIndexWithDefault - 1) : currentIndexWithDefault] : nil
+            
+            HStack {
+                FeedIconView(feed: currentFeed, size: 24.0)
+                
+                Text(currentFeed?.name ?? "Unnamed Feed")
+                    .font(.system(size: 34.0, weight: .bold, design: .default))
+                    .foregroundColor(.white)
             }
-        }
-        .onAppear {
-            viewModel.fetchRSSFeed(from: feed)
+            
+            if let lastRefreshDate = currentFeed?.lastRefreshDate {
+                RelativeTimeText(targetDate: lastRefreshDate, style: { label in
+                    label
+                        .font(.system(size: 16.0, weight: .regular, design: .default))
+                        .foregroundColor(.white.opacity(0.8))
+                })
+            }
         }
     }
 }
 
-
+struct FeedPagesView: View {
+    let feedCount: Int
+    let hasFavorites: Bool
+    let currentIndex: Int
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<(hasFavorites ? (feedCount + 1) : feedCount), id: \.self) { index in
+                if index == 0 && hasFavorites {
+                    Image(systemName: "star.fill")
+                        .resizable()
+                        .frame(width: 10, height: 10)
+                        .foregroundColor(currentIndex == 0 ? .yellow : .gray)
+                        .scaleEffect(currentIndex == 0 ? 1.0 : 0.9)
+                } else {
+                    Circle()
+                        .frame(width: 8, height: 8)
+                        .scaleEffect(currentIndex == index ? 1.0 : 0.9)
+                        .foregroundColor(currentIndex == index ? .white : .gray)
+                }
+            }
+        }
+    }
+}
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -53,58 +95,13 @@ struct ContentView: View {
             let padding = 0.0
             let aspectRatioCards = 16.0 / 10.0
             let cardsWidth = geometry.size.width - (padding * 4.0)
-            let cardsHeight = cardsWidth * aspectRatioCards
             
             VStack(spacing: 16.0) {
                 HStack(alignment: .center, spacing: 8.0) {
                     VStack(alignment: .leading, spacing: 2.0) {
-                        let currentIndexWithDefault = (currentIndex ?? 0)
-                        
-                        if currentIndexWithDefault == 0 && hasFavorites {
-                            HStack {
-                                Image(systemName: "star.fill")
-                                    .resizable()
-                                    .frame(width: 24.0, height: 24.0)
-                                    .foregroundColor(.yellow)
-                                
-                                Text("Favorites")
-                                    .font(.system(size: 34.0, weight: .bold, design: .default))
-                                    .foregroundColor(.white)
-                            }.padding(.bottom, 21.0)
-                        } else {
-                            let areFeedsEmpty = feeds.isEmpty
-                            let isCurrentIndexAboveFeedCount = currentIndexWithDefault < (hasFavorites ? feeds.count + 1 : feeds.count)
-                            let currentFeed = (!areFeedsEmpty && isCurrentIndexAboveFeedCount) ? feeds[hasFavorites ? (currentIndexWithDefault - 1) : currentIndexWithDefault] : nil
-                            
-                            HStack {
-                                if let iconImage = currentFeed?.iconImage,
-                                   let iconImageURL = URL(string: iconImage) {
-                                    KFImage(iconImageURL)
-                                        .placeholder {
-                                        }
-                                        .onFailure({ error in
-                                            
-                                        })
-                                        .loadDiskFileSynchronously()
-                                        .cacheMemoryOnly()
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 24.0, height: 24.0)
-                                }
-                                
-                                Text(currentFeed?.name ?? "Unnamed Feed")
-                                    .font(.system(size: 34.0, weight: .bold, design: .default))
-                                    .foregroundColor(.white)
-                            }
-                            
-                            if let lastRefreshDate = currentFeed?.lastRefreshDate {
-                                RelativeTimeLabel(targetDate: lastRefreshDate, style: { label in
-                                    label
-                                        .font(.system(size: 16.0, weight: .regular, design: .default))
-                                        .foregroundColor(.white.opacity(0.8))
-                                })
-                            }
-                        }
+                        FeedHeaderView(currentIndex: currentIndex, 
+                                       hasFavorites: hasFavorites,
+                                       feeds: feeds)
                     }
                     
                     Spacer()
@@ -128,13 +125,13 @@ struct ContentView: View {
                 ScrollView(.horizontal) {
                     LazyHStack(spacing: 0.0) {
                         ForEach(0..<(hasFavorites ? (feeds.count + 1) : feeds.count), id: \.self) { i in
-                            if i == 0 && hasFavorites { // Favorite
-                                CardsStackHolderView(feed: nil)
+                            if i == 0 && hasFavorites { // Favorites
+                                FeedView(feed: nil)
                                     .frame(width: cardsWidth, height: .infinity)
                                     .zIndex(currentIndex == i ? 10 : 0)
                             } else {
                                 let feed = feeds[hasFavorites ? i - 1 : i]
-                                CardsStackHolderView(feed: feed)
+                                FeedView(feed: feed)
                                     .frame(width: cardsWidth, height: .infinity)
                                     .zIndex(currentIndex == i ? 10 : 0)
                             }
@@ -167,28 +164,15 @@ struct ContentView: View {
                     DragGesture().onChanged { _ in }.onEnded { _ in }
                 )
                 
-                HStack(spacing: 8) {
-                    ForEach(0..<(hasFavorites ? (feeds.count + 1) : feeds.count), id: \.self) { index in
-                        if index == 0 && hasFavorites {
-                            Image(systemName: "star.fill")
-                                .resizable()
-                                .frame(width: 10, height: 10)
-                                .foregroundColor(currentIndex == 0 ? .yellow : .gray)
-                                .scaleEffect(currentIndex == 0 ? 1.0 : 0.9)
-                        } else {
-                            Circle()
-                                .frame(width: 8, height: 8)
-                                .scaleEffect(currentIndex == index ? 1.0 : 0.9)
-                                .foregroundColor(currentIndex == index ? .white : .gray)
-                        }
-                    }
-                }
+                FeedPagesView(feedCount: feeds.count,
+                              hasFavorites: hasFavorites,
+                              currentIndex: currentIndex ?? 0)
                 .zIndex(-1)
             }
         }
         .background(Color.black)
         .sheet(isPresented: $showSettings) {
-            FeedSettingsView()
+            SettingsView()
         }
     }
 }

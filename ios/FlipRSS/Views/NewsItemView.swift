@@ -1,5 +1,5 @@
 //
-//  NewsPhotoView.swift
+//  NewsItemView.swift
 //  FlipRSS
 //
 //  Created by Darian on 14.10.2024..
@@ -9,7 +9,7 @@ import SwiftUI
 import Kingfisher
 
 /// A news view with a photo, title and a subtitle.
-struct NewsPhotoView: View {
+struct NewsItemView: View {
     /// Large font size for the title.
     static let largeTitleFontSize = 24.0
     
@@ -66,23 +66,23 @@ struct NewsPhotoView: View {
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(news.title)
-                            .font(.system(size: isLarge ? NewsPhotoView.largeTitleFontSize : NewsPhotoView.titleFontSize, weight: .bold, design: .serif))
+                            .font(.system(size: isLarge ? NewsItemView.largeTitleFontSize : NewsItemView.titleFontSize, weight: .bold, design: .serif))
                             .lineLimit(3)
                             .foregroundColor(.white)
                             .frame(maxWidth: geometry.size.width, alignment: .leading)
                         
                         if (!news.details.isEmpty) {
                             Text(news.details)
-                                .font(.system(size: isLarge ? NewsPhotoView.largeSubtitleFontSize : NewsPhotoView.subtitleFontSize, weight: .regular, design: .default))
+                                .font(.system(size: isLarge ? NewsItemView.largeSubtitleFontSize : NewsItemView.subtitleFontSize, weight: .regular, design: .default))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: geometry.size.width, alignment: .leading)
                                 .lineLimit(2)
                         }
                         
                         if (news.date != nil) {
-                            RelativeTimeLabel(targetDate: news.date!, style: { label in
+                            RelativeTimeText(targetDate: news.date!, style: { label in
                                 label
-                                    .font(.system(size: isLarge ? NewsPhotoView.largeTimeFontSize : NewsPhotoView.timeFontSize, weight: .regular, design: .default))
+                                    .font(.system(size: isLarge ? NewsItemView.largeTimeFontSize : NewsItemView.timeFontSize, weight: .regular, design: .default))
                                     .foregroundColor(.white.opacity(0.8))
                             })
                         }
@@ -101,7 +101,7 @@ struct NewsPhotoView: View {
                     VStack {
                         Spacer()
                         Text(news.title)
-                            .font(.system(size: NewsPhotoView.largeTitleFontSize, weight: .bold, design: .serif))
+                            .font(.system(size: NewsItemView.largeTitleFontSize, weight: .bold, design: .serif))
                             .foregroundColor(.black)
                             .lineLimit(3)
                             .multilineTextAlignment(.center)
@@ -109,16 +109,16 @@ struct NewsPhotoView: View {
                         
                         if (!news.details.isEmpty) {
                             Text(news.details)
-                                .font(.system(size: NewsPhotoView.subtitleFontSize, weight: .regular, design: .default))
+                                .font(.system(size: NewsItemView.subtitleFontSize, weight: .regular, design: .default))
                                 .foregroundColor(.black)
                                 .lineLimit(2)
                                 .multilineTextAlignment(.center)
                         }
                         
                         if (news.date != nil) {
-                            RelativeTimeLabel(targetDate: news.date!, style: { label in
+                            RelativeTimeText(targetDate: news.date!, style: { label in
                                 label
-                                    .font(.system(size: NewsPhotoView.timeFontSize, weight: .regular, design: .default))
+                                    .font(.system(size: NewsItemView.timeFontSize, weight: .regular, design: .default))
                                     .foregroundColor(.black.opacity(0.8))
                             })
                             .padding(.top, 8)
