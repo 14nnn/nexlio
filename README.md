@@ -2,7 +2,7 @@
 
 FlipRSS is a modern RSS reader for iOS that presents news articles in an engaging, card-based interface with smooth flip animations. The app supports RSS, Atom, and JSON Feed formats.
 
-![Home](./Screenshots/home.png)
+![Home](./Screenshots/home.png | width=200)
 
 
 ## Features
