@@ -1,6 +1,6 @@
-# FlipRSS
+# nexlio
 
-FlipRSS is a modern RSS reader for iOS that presents news articles in an engaging, card-based interface with smooth flip animations. The app supports RSS, Atom, and JSON Feed formats.
+nexlio is a modern RSS reader for iOS that presents news articles in an engaging, card-based interface with smooth flip animations. The app supports RSS, Atom, and JSON Feed formats.
 
 <img src="https://raw.githubusercontent.com/14nnn/nexlio/main/Screenshots/home.png" width="400"/>
 
